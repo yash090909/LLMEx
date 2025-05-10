@@ -1,0 +1,996 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline Excel Viewer v3</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Custom Styles */
+        :root {
+            --bg-primary-light: #f3f4f6; /* gray-100 */
+            --bg-secondary-light: #ffffff; /* white */
+            --text-primary-light: #1f2937; /* gray-800 */
+            --text-secondary-light: #4b5563; /* gray-600 */
+            --border-light: #e5e7eb; /* gray-200 */
+            --icon-light: #059669; /* emerald-600 */
+            --nav-bg-light: #047857; /* emerald-700 */
+            --nav-text-light: #ffffff;
+            --footer-bg-light: #1e293b; /* slate-800 */
+            --footer-text-light: #cbd5e1; /* slate-300 */
+            --input-bg-light: #ffffff;
+            --input-border-light: #d1d5db; /* gray-300 */
+            --input-text-light: #1f2937;
+            --input-placeholder-light: #9ca3af; /* gray-400 */
+            --button-primary-bg-light: #10b981; /* emerald-500 */
+            --button-primary-text-light: #ffffff;
+            --file-item-hover-light: #f9fafb; /* gray-50 */
+            --delete-icon-light: #ef4444; /* red-500 */
+            --delete-icon-hover-light: #991b1b; /* red-800 */
+            --delete-bg-hover-light: #fee2e2; /* red-100 */
+            --scrollbar-track-light: #e5e7eb; /* gray-200 */
+            --scrollbar-thumb-light: #9ca3af; /* gray-400 */
+            --scrollbar-thumb-hover-light: #6b7280; /* gray-500 */
+            --progress-bar-bg-light: #10b981; /* emerald-500 */
+            --progress-track-bg-light: #e5e7eb; /* gray-200 */
+
+            --bg-primary-dark: #1f2937; /* gray-800 */
+            --bg-secondary-dark: #374151; /* gray-700 */
+            --text-primary-dark: #f3f4f6; /* gray-100 */
+            --text-secondary-dark: #d1d5db; /* gray-300 */
+            --border-dark: #4b5563; /* gray-600 */
+            --icon-dark: #34d399; /* emerald-400 */
+            --nav-bg-dark: #065f46; /* emerald-800 */
+            --nav-text-dark: #d1fae5; /* emerald-100 */
+            --footer-bg-dark: #0f172a; /* slate-900 */
+            --footer-text-dark: #94a3b8; /* slate-400 */
+            --input-bg-dark: #4b5563; /* gray-600 */
+            --input-border-dark: #6b7280; /* gray-500 */
+            --input-text-dark: #f3f4f6;
+            --input-placeholder-dark: #9ca3af; /* gray-400 */
+            --button-primary-bg-dark: #34d399; /* emerald-400 */
+            --button-primary-text-dark: #064e3b; /* emerald-900 */
+            --file-item-hover-dark: #4b5563; /* gray-600 */
+            --delete-icon-dark: #f87171; /* red-400 */
+            --delete-icon-hover-dark: #fca5a5; /* red-300 */
+            --delete-bg-hover-dark: #7f1d1d; /* red-900 */
+            --scrollbar-track-dark: #374151; /* gray-700 */
+            --scrollbar-thumb-dark: #6b7280; /* gray-500 */
+            --scrollbar-thumb-hover-dark: #9ca3af; /* gray-400 */
+            --progress-bar-bg-dark: #34d399; /* emerald-400 */
+            --progress-track-bg-dark: #4b5563; /* gray-600 */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+            background-color: var(--bg-primary-light);
+            color: var(--text-primary-light);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .dark body {
+            background-color: var(--bg-primary-dark);
+            color: var(--text-primary-dark);
+        }
+
+        /* Custom scrollbar for scrollable areas */
+        #resultsArea::-webkit-scrollbar,
+        #storedFilesList::-webkit-scrollbar,
+        .max-h-60::-webkit-scrollbar, /* General class for other potential scroll areas */
+        .max-h-72::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        #resultsArea::-webkit-scrollbar-track,
+        #storedFilesList::-webkit-scrollbar-track,
+        .max-h-60::-webkit-scrollbar-track,
+        .max-h-72::-webkit-scrollbar-track {
+            background: var(--scrollbar-track-light);
+            border-radius: 10px;
+        }
+        .dark #resultsArea::-webkit-scrollbar-track,
+        .dark #storedFilesList::-webkit-scrollbar-track,
+        .dark .max-h-60::-webkit-scrollbar-track,
+        .dark .max-h-72::-webkit-scrollbar-track {
+            background: var(--scrollbar-track-dark);
+        }
+
+        #resultsArea::-webkit-scrollbar-thumb,
+        #storedFilesList::-webkit-scrollbar-thumb,
+        .max-h-60::-webkit-scrollbar-thumb,
+        .max-h-72::-webkit-scrollbar-thumb {
+            background-color: var(--scrollbar-thumb-light);
+            border-radius: 10px;
+            border: 2px solid var(--scrollbar-track-light);
+        }
+        .dark #resultsArea::-webkit-scrollbar-thumb,
+        .dark #storedFilesList::-webkit-scrollbar-thumb,
+        .dark .max-h-60::-webkit-scrollbar-thumb,
+        .dark .max-h-72::-webkit-scrollbar-thumb {
+            background-color: var(--scrollbar-thumb-dark);
+            border: 2px solid var(--scrollbar-track-dark);
+        }
+
+        #resultsArea::-webkit-scrollbar-thumb:hover,
+        #storedFilesList::-webkit-scrollbar-thumb:hover,
+        .max-h-60::-webkit-scrollbar-thumb:hover,
+        .max-h-72::-webkit-scrollbar-thumb:hover {
+            background-color: var(--scrollbar-thumb-hover-light);
+        }
+        .dark #resultsArea::-webkit-scrollbar-thumb:hover,
+        .dark #storedFilesList::-webkit-scrollbar-thumb:hover,
+        .dark .max-h-60::-webkit-scrollbar-thumb:hover,
+        .dark .max-h-72::-webkit-scrollbar-thumb:hover {
+            background-color: var(--scrollbar-thumb-hover-dark);
+        }
+
+        /* Toast Notification Style (largely Tailwind, but for transitions) */
+        .toast-notification {
+            padding: 0.75rem 1.25rem; /* py-3 px-5 */
+            border-radius: 0.5rem; /* rounded-lg */
+            color: white; /* Text color is often white for toasts */
+            font-size: 0.9rem;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100%); /* Start off-screen to the right */
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            min-width: 250px; /* Minimum width for toast */
+        }
+        .dark .toast-notification { /* Dark mode toast might need different shadow or bg if not using specific type classes */
+             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        .toast-notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .toast-success { background-color: #10b981; } /* emerald-500 */
+        .toast-error { background-color: #ef4444; } /* red-500 */
+        .toast-info { background-color: #3b82f6; } /* blue-500 */
+        .toast-warning { background-color: #f59e0b; } /* amber-500 */
+        /* Dark mode specific toast backgrounds if needed, or adjust text color if bg is too light */
+        .dark .toast-success { background-color: #34d399; color: #064e3b; }
+        .dark .toast-error { background-color: #f87171; color: #7f1d1d; }
+        .dark .toast-info { background-color: #60a5fa; color: #1e40af; }
+        .dark .toast-warning { background-color: #fbbf24; color: #78350f; }
+
+
+        .toast-notification .icon {
+            margin-right: 0.75rem; /* mr-3 */
+            font-size: 1.25rem; /* text-xl */
+        }
+
+        /* Style for file list items */
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem; /* py-3 px-4 */
+            border-bottom: 1px solid var(--border-light);
+            transition: background-color 0.2s ease;
+            color: var(--text-secondary-light);
+        }
+        .dark .file-item {
+            border-bottom-color: var(--border-dark);
+            color: var(--text-secondary-dark);
+        }
+        .file-item:hover {
+            background-color: var(--file-item-hover-light);
+        }
+        .dark .file-item:hover {
+            background-color: var(--file-item-hover-dark);
+        }
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        .file-item .file-name-text {
+            word-break: break-all;
+            margin-right: 1rem; /* mr-4 */
+            color: var(--text-primary-light); /* Slightly darker for emphasis */
+            font-size: 0.9rem; /* text-sm */
+        }
+        .dark .file-item .file-name-text {
+            color: var(--text-primary-dark);
+        }
+        .delete-button {
+            cursor: pointer;
+            color: var(--delete-icon-light);
+            transition: color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+            padding: 0.375rem; /* p-1.5 */
+            border-radius: 0.375rem; /* rounded-md */
+        }
+        .dark .delete-button {
+            color: var(--delete-icon-dark);
+        }
+        .delete-button:hover {
+            color: var(--delete-icon-hover-light);
+            transform: scale(1.1);
+            background-color: var(--delete-bg-hover-light);
+        }
+        .dark .delete-button:hover {
+            color: var(--delete-icon-hover-dark);
+            background-color: var(--delete-bg-hover-dark);
+        }
+
+        /* Theme Toggle Switch */
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+        }
+        .theme-switch {
+            display: inline-block;
+            height: 26px; /* Adjusted height */
+            position: relative;
+            width: 50px; /* Adjusted width */
+        }
+        .theme-switch input {
+            display:none;
+        }
+        .slider {
+            background-color: #ccc;
+            bottom: 0;
+            cursor: pointer;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            transition: .4s;
+        }
+        .slider:before {
+            background-color: #fff;
+            bottom: 3px; /* Adjusted position */
+            content: "";
+            height: 20px; /* Adjusted size */
+            left: 3px; /* Adjusted position */
+            position: absolute;
+            transition: .4s;
+            width: 20px; /* Adjusted size */
+        }
+        input:checked + .slider {
+            background-color: var(--icon-light); /* Use theme color */
+        }
+        .dark input:checked + .slider {
+             background-color: var(--icon-dark);
+        }
+        input:checked + .slider:before {
+            transform: translateX(24px); /* Adjusted translation */
+        }
+        .slider.round {
+            border-radius: 26px; /* Adjusted for height */
+        }
+        .slider.round:before {
+            border-radius: 50%;
+        }
+        .theme-switch-wrapper .fa-moon, .theme-switch-wrapper .fa-sun {
+            color: var(--nav-text-light);
+            margin: 0 8px;
+            font-size: 1rem; /* Slightly smaller icons */
+        }
+        .dark .theme-switch-wrapper .fa-moon, .dark .theme-switch-wrapper .fa-sun {
+             color: var(--nav-text-dark);
+        }
+
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <nav class="shadow-lg sticky top-0 z-50" style="background-color: var(--nav-bg-light);">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl sm:text-3xl font-bold flex items-center" style="color: var(--nav-text-light);">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 7V4h16v3"></path>
+                            <path d="M4 12h16"></path>
+                            <path d="M4 17h16"></path>
+                            <path d="M8 4v16"></path>
+                            <path d="M16 4v16"></path>
+                        </svg>
+                        Offline Excel Viewer
+                    </span>
+                </div>
+                <div class="theme-switch-wrapper">
+                    <i class="fas fa-sun"></i>
+                    <label class="theme-switch" for="themeToggleCheckbox">
+                        <input type="checkbox" id="themeToggleCheckbox" />
+                        <div class="slider round"></div>
+                    </label>
+                    <i class="fas fa-moon"></i>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <script>
+        // Apply nav background color for dark mode via JS due to Tailwind's sticky behavior and CSS var limitations
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.querySelector('nav').style.backgroundColor = 'var(--nav-bg-dark)';
+            document.querySelector('nav span').style.color = 'var(--nav-text-dark)';
+            document.querySelectorAll('.theme-switch-wrapper i').forEach(i => i.style.color = 'var(--nav-text-dark)');
+        }
+    </script>
+
+    <main class="flex-grow container mx-auto px-4 py-6 sm:px-6 lg:px-8 w-full">
+
+        <section class="mb-8 p-4 sm:p-6 rounded-xl shadow-xl" style="background-color: var(--bg-secondary-light);">
+            <label for="searchBox" class="block text-lg font-semibold mb-2" style="color: var(--text-primary-light);">
+                <i class="fas fa-search mr-2" style="color: var(--icon-light);"></i>Search Data
+            </label>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-search" style="color: var(--input-placeholder-light);"></i>
+                </div>
+                <input type="text" id="searchBox" placeholder="Type keywords to search all stored Excel data..."
+                       class="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 shadow-sm text-base transition-shadow hover:shadow-md"
+                       style="background-color: var(--input-bg-light); border-color: var(--input-border-light); color: var(--input-text-light); --tw-ring-color: var(--icon-light);"
+                       onfocus="this.style.borderColor = 'var(--icon-light)';"
+                       onblur="this.style.borderColor = 'var(--input-border-light)';">
+            </div>
+            <p id="searchStatus" class="text-sm mt-2 h-5" style="color: var(--text-secondary-light);"></p>
+        </section>
+
+        <section class="mb-8">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-xl font-semibold" style="color: var(--text-primary-light);">Results</h2>
+            </div>
+            <div id="resultsArea" class="min-h-[200px] max-h-[70vh] overflow-y-auto pr-2">
+                <div class="default-message text-center italic mt-10 text-lg p-6 rounded-lg shadow-md"
+                     style="display: block; background-color: var(--bg-secondary-light); color: var(--text-secondary-light);">
+                    <i class="fas fa-file-upload mr-2 text-2xl block mb-2" style="color: var(--input-placeholder-light);"></i>Upload an Excel file to begin searching.
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <section class="p-4 sm:p-6 rounded-xl shadow-xl flex flex-col" style="background-color: var(--bg-secondary-light);">
+                <h2 class="text-xl font-semibold mb-4 flex items-center" style="color: var(--text-primary-light);">
+                    <i class="fas fa-upload mr-2" style="color: var(--icon-light);"></i>Upload New File
+                </h2>
+                <div class="space-y-4 flex-grow flex flex-col justify-between">
+                    <div>
+                        <label for="fileInput" class="block text-sm font-medium mb-1" style="color: var(--text-primary-light);">Choose Excel File (.xlsx, .xls)</label>
+                        <input type="file" id="fileInput" accept=".xlsx, .xls, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                               class="block w-full text-sm file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold cursor-pointer border rounded-lg p-1 transition-colors"
+                               style="color: var(--text-secondary-light); border-color: var(--input-border-light); --file-bg: var(--bg-primary-light); --file-text: var(--icon-light);"
+                               onmouseover="this.style.setProperty('--file-bg', 'var(--bg-primary-dark)')"
+                               onmouseout="this.style.setProperty('--file-bg', 'var(--bg-primary-light)')">
+                        <p class="text-xs mt-1" style="color: var(--text-secondary-light);">Max file size: 10 MB</p>
+                    </div>
+                    <div id="progressContainer" class="mt-3" style="display: none;">
+                        <label id="progressLabel" class="block text-sm font-medium mb-1" style="color: var(--text-primary-light);">Processing...</label>
+                        <div class="w-full rounded-full h-3" style="background-color: var(--progress-track-bg-light);">
+                            <div id="progressBar" class="h-3 rounded-full transition-all duration-300 ease-out" style="width: 0%; background-color: var(--progress-bar-bg-light);"></div>
+                        </div>
+                    </div>
+                    <div id="statusMessageContainer" class="mt-2 h-5">
+                        <p id="statusMessage" class="text-sm text-center font-medium" style="color: var(--text-primary-light);"></p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="p-4 sm:p-6 rounded-xl shadow-xl flex flex-col" style="background-color: var(--bg-secondary-light);">
+                <h2 class="text-xl font-semibold mb-4 flex items-center" style="color: var(--text-primary-light);">
+                    <i class="fas fa-database mr-2" style="color: var(--icon-light);"></i>Stored Files
+                </h2>
+                <div id="storedFilesList" class="border rounded-lg max-h-72 overflow-y-auto flex-grow" style="border-color: var(--border-light);">
+                    <div class="file-item italic p-4" id="noFilesMessage" style="color: var(--text-secondary-light);">
+                        <i class="fas fa-folder-open mr-2"></i>No files stored yet.
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="text-center py-4 mt-auto shadow-inner" style="background-color: var(--footer-bg-light); color: var(--footer-text-light);">
+        <p class="text-sm">Created By YashPathak09</p>
+        <p class="text-xs mt-1">App Status: <span id="footerStatus" class="font-semibold">Initializing...</span></p>
+    </footer>
+
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-[1001] space-y-2 w-auto max-w-md"></div>
+
+    <script src="https://unpkg.com/dexie@4.0.1/dist/dexie.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+
+    <script>
+        // --- Theme Management ---
+        const themeToggle = document.getElementById('themeToggleCheckbox');
+        const currentTheme = localStorage.getItem('theme');
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                themeToggle.checked = true;
+                // Update styles for elements not easily targeted by pure CSS variables or Tailwind dark prefix
+                document.querySelector('nav').style.backgroundColor = 'var(--nav-bg-dark)';
+                document.querySelector('nav span').style.color = 'var(--nav-text-dark)';
+                 document.querySelectorAll('.theme-switch-wrapper i').forEach(i => i.style.color = 'var(--nav-text-dark)');
+                document.querySelectorAll('section, .default-message, .result-card-bg').forEach(el => el.style.backgroundColor = 'var(--bg-secondary-dark)');
+                document.querySelectorAll('label, h2, #statusMessage, .file-item .file-name-text').forEach(el => el.style.color = 'var(--text-primary-dark)');
+                document.querySelectorAll('#searchStatus, #fileInput, .default-message i, .file-item, #noFilesMessage, p.text-xs').forEach(el => el.style.color = 'var(--text-secondary-dark)');
+                document.querySelectorAll('.fa-search, .fa-upload, .fa-database').forEach(el => el.style.color = 'var(--icon-dark)');
+                document.getElementById('searchBox').style.backgroundColor = 'var(--input-bg-dark)';
+                document.getElementById('searchBox').style.borderColor = 'var(--input-border-dark)';
+                document.getElementById('searchBox').style.color = 'var(--input-text-dark)';
+                document.getElementById('searchBox').style.setProperty('--tw-ring-color', 'var(--icon-dark)');
+                document.getElementById('searchBox').placeholder.color = 'var(--input-placeholder-dark)';
+                document.querySelector('footer').style.backgroundColor = 'var(--footer-bg-dark)';
+                document.querySelector('footer').style.color = 'var(--footer-text-dark)';
+                document.getElementById('storedFilesList').style.borderColor = 'var(--border-dark)';
+                document.getElementById('fileInput').style.borderColor = 'var(--input-border-dark)';
+                document.getElementById('fileInput').style.setProperty('--file-bg', 'var(--bg-primary-dark)');
+                document.getElementById('fileInput').style.setProperty('--file-text', 'var(--icon-dark)');
+                document.querySelector('#progressContainer > div').style.backgroundColor = 'var(--progress-track-bg-dark)';
+                document.getElementById('progressBar').style.backgroundColor = 'var(--progress-bar-bg-dark)';
+
+            } else {
+                document.documentElement.classList.remove('dark');
+                themeToggle.checked = false;
+                document.querySelector('nav').style.backgroundColor = 'var(--nav-bg-light)';
+                document.querySelector('nav span').style.color = 'var(--nav-text-light)';
+                document.querySelectorAll('.theme-switch-wrapper i').forEach(i => i.style.color = 'var(--nav-text-light)');
+                document.querySelectorAll('section, .default-message, .result-card-bg').forEach(el => el.style.backgroundColor = 'var(--bg-secondary-light)');
+                document.querySelectorAll('label, h2, #statusMessage, .file-item .file-name-text').forEach(el => el.style.color = 'var(--text-primary-light)');
+                document.querySelectorAll('#searchStatus, #fileInput, .default-message i, .file-item, #noFilesMessage, p.text-xs').forEach(el => el.style.color = 'var(--text-secondary-light)');
+                document.querySelectorAll('.fa-search, .fa-upload, .fa-database').forEach(el => el.style.color = 'var(--icon-light)');
+                document.getElementById('searchBox').style.backgroundColor = 'var(--input-bg-light)';
+                document.getElementById('searchBox').style.borderColor = 'var(--input-border-light)';
+                document.getElementById('searchBox').style.color = 'var(--input-text-light)';
+                document.getElementById('searchBox').style.setProperty('--tw-ring-color', 'var(--icon-light)');
+                document.getElementById('searchBox').placeholder.color = 'var(--input-placeholder-light)';
+                document.querySelector('footer').style.backgroundColor = 'var(--footer-bg-light)';
+                document.querySelector('footer').style.color = 'var(--footer-text-light)';
+                document.getElementById('storedFilesList').style.borderColor = 'var(--border-light)';
+                document.getElementById('fileInput').style.borderColor = 'var(--input-border-light)';
+                document.getElementById('fileInput').style.setProperty('--file-bg', 'var(--bg-primary-light)');
+                document.getElementById('fileInput').style.setProperty('--file-text', 'var(--icon-light)');
+                document.querySelector('#progressContainer > div').style.backgroundColor = 'var(--progress-track-bg-light)';
+                document.getElementById('progressBar').style.backgroundColor = 'var(--progress-bar-bg-light)';
+            }
+            // Re-apply result card styles as they are dynamically generated
+            if (document.querySelector('#resultsArea .bg-white, #resultsArea .dark\\:bg-gray-750')) { // check if results exist
+                 handleSearch(); // Re-render results to apply new theme styles to cards
+            }
+        }
+
+        if (currentTheme) {
+            applyTheme(currentTheme);
+        } else if (prefersDarkScheme.matches) {
+            applyTheme('dark');
+            localStorage.setItem('theme', 'dark'); // Save preference if OS is dark
+        } else {
+            applyTheme('light'); // Default to light
+        }
+
+        themeToggle.addEventListener('change', function() {
+            if (this.checked) {
+                applyTheme('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                applyTheme('light');
+                localStorage.setItem('theme', 'light');
+            }
+        });
+        // Listen for OS theme changes
+        prefersDarkScheme.addEventListener('change', (e) => {
+            if (!localStorage.getItem('theme')) { // Only if no user preference is set
+                applyTheme(e.matches ? 'dark' : 'light');
+            }
+        });
+
+
+        // --- DOM Elements ---
+        const fileInput = document.getElementById('fileInput');
+        const searchBox = document.getElementById('searchBox');
+        const resultsArea = document.getElementById('resultsArea');
+        const progressBar = document.getElementById('progressBar');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressLabel = document.getElementById('progressLabel');
+        const statusMessage = document.getElementById('statusMessage');
+        const storedFilesList = document.getElementById('storedFilesList');
+        const noFilesMessageElement = document.getElementById('noFilesMessage');
+        const defaultResultsMessageElement = resultsArea.querySelector('.default-message');
+        const toastContainer = document.getElementById('toastContainer');
+        const searchStatus = document.getElementById('searchStatus');
+        const footerStatus = document.getElementById('footerStatus');
+
+        // --- Constants ---
+        const DB_NAME = 'ExcelDataDB_V3_Dark'; // New DB name to avoid conflicts if schema changes
+        const STORE_NAME = 'excelDataStoreV3_Dark';
+        const METADATA_STORE_NAME = 'fileMetadataV3_Dark';
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+        const SEARCH_DEBOUNCE_MS = 300;
+        const MAX_SEARCH_RESULTS = 200;
+
+        // --- Dexie Database Setup ---
+        const db = new Dexie(DB_NAME);
+        db.version(5).stores({ // Incremented version for new theme or any schema tweaks
+            [STORE_NAME]: '++id, fileName, *_searchableTokens',
+            [METADATA_STORE_NAME]: 'fileName, headers, originalFileName, sheetName'
+        }).upgrade(tx => {
+            console.log("Applying Dexie schema version 5");
+        });
+
+        // --- Global State ---
+        let searchTimeoutId = null;
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM Content Loaded. Initializing v3 with Dark Mode...");
+            // Theme is applied above, before DOMContentLoaded for faster paint
+            loadStoredFilesList();
+            updateResultsDisplay([]);
+            updateFooterStatus('Ready');
+            // Apply initial theme to dynamic elements after they are surely loaded
+            applyTheme(localStorage.getItem('theme') || (prefersDarkScheme.matches ? 'dark' : 'light'));
+            console.log("Initialization complete.");
+        });
+
+        // --- Event Listeners ---
+        fileInput.addEventListener('change', handleFileUpload);
+        searchBox.addEventListener('input', () => {
+            clearTimeout(searchTimeoutId);
+            searchTimeoutId = setTimeout(handleSearch, SEARCH_DEBOUNCE_MS);
+            searchStatus.textContent = 'Typing...';
+        });
+
+        // --- Utility: HTML Escaping ---
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/[&<>"']/g, function (match) {
+                return {
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                }[match];
+            });
+        }
+
+        // --- Toast Notifications ---
+        function showToast(message, type = 'info', duration = 3500) {
+            console.log(`Toast: ${message} (Type: ${type})`);
+            const toast = document.createElement('div');
+            toast.className = `toast-notification toast-${type}`; // Base classes
+
+            let iconClass = 'fas fa-info-circle';
+            if (type === 'success') iconClass = 'fas fa-check-circle';
+            if (type === 'error') iconClass = 'fas fa-times-circle';
+            if (type === 'warning') iconClass = 'fas fa-exclamation-triangle';
+
+            toast.innerHTML = `
+                <i class="${iconClass} icon"></i>
+                <span>${escapeHTML(message)}</span>
+            `;
+            toastContainer.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10); // Trigger transition
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+            }, duration);
+        }
+
+        // --- File Upload Handling ---
+        async function handleFileUpload(event) {
+            console.log("File input changed.");
+            const file = event.target.files[0];
+            if (!file) return;
+            console.log(`File selected: ${file.name}, Size: ${file.size}, Type: ${file.type}`);
+            resetUploadUI();
+
+            if (!isValidFile(file)) {
+                showToast(`Invalid file. Please upload .xlsx or .xls (Max ${MAX_FILE_SIZE / 1024 / 1024}MB).`, 'error');
+                resetFileInput();
+                return;
+            }
+
+            showProgressState('Reading file...', 10);
+            updateFooterStatus(`Reading ${file.name}...`);
+
+            try {
+                const arrayBuffer = await readFileAsArrayBuffer(file);
+                showProgressState('Parsing Excel data...', 30);
+                updateFooterStatus(`Parsing ${file.name}...`);
+                await new Promise(resolve => setTimeout(resolve, 50));
+
+                const workbookData = await parseExcelData(arrayBuffer);
+                showProgressState('Processing data...', 60);
+                updateFooterStatus(`Processing ${file.name}...`);
+
+                if (!workbookData || workbookData.length === 0) throw new Error("Workbook empty or unreadable.");
+                let sheetToProcess = workbookData.find(sheet => sheet.data && sheet.data.length > 0);
+                if (!sheetToProcess) throw new Error("No data found in any sheet.");
+
+                console.log(`Processing sheet: ${sheetToProcess.sheetName}`);
+                const { sheetName, headers, data } = sheetToProcess;
+                const fileIdentifier = `${file.name}::${sheetName}`;
+
+                const existingMeta = await db[METADATA_STORE_NAME].get(fileIdentifier);
+                if (existingMeta) {
+                    if (!confirm(`Data for "${file.name}" (Sheet: "${sheetName}") already exists. Overwrite?`)) {
+                        throw new Error("Storage cancelled by user.");
+                    }
+                    await deleteFileDataInternal(fileIdentifier, false);
+                }
+                
+                showProgressState('Storing data locally...', 80);
+                updateFooterStatus(`Storing data from ${file.name}...`);
+                await storeData(fileIdentifier, file.name, sheetName, headers, data);
+
+                showProgressState('Complete!', 100);
+                showToast(`"${file.name}" (Sheet: "${sheetName}") stored successfully!`, 'success');
+                await loadStoredFilesList();
+            } catch (error) {
+                console.error("Error processing file:", error);
+                showToast(`Error: ${error.message}`, 'error');
+                updateFooterStatus('Error processing file');
+            } finally {
+                resetFileInput();
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    progressBar.style.width = '0%';
+                    statusMessage.textContent = '';
+                }, 2500);
+                updateFooterStatus('Ready');
+            }
+        }
+
+        function resetUploadUI() {
+            statusMessage.textContent = '';
+            progressContainer.style.display = 'none';
+            progressBar.style.width = '0%';
+        }
+        function resetFileInput() { fileInput.value = ''; }
+
+        function showProgressState(message, percentage) {
+            progressContainer.style.display = 'block';
+            progressLabel.textContent = message;
+            progressBar.style.width = `${percentage}%`;
+            if (percentage === 100) statusMessage.textContent = message;
+            else statusMessage.textContent = '';
+        }
+
+        function isValidFile(file) {
+            const allowedExtensions = ['.xlsx', '.xls'];
+            const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+            return allowedExtensions.includes(fileExtension) && file.size <= MAX_FILE_SIZE;
+        }
+
+        function readFileAsArrayBuffer(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.onerror = e => reject(new Error("Failed to read file."));
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // --- Excel Parsing (SheetJS) ---
+        function parseExcelData(arrayBuffer) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
+                    const results = [];
+                    workbook.SheetNames.forEach(sheetName => {
+                        const sheet = workbook.Sheets[sheetName];
+                        const rowsArray = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+                        if (rowsArray.length > 0) {
+                            let headerRowIndex = 0;
+                            while (headerRowIndex < rowsArray.length && rowsArray[headerRowIndex].every(cell => cell === "")) {
+                                headerRowIndex++;
+                            }
+                            if (headerRowIndex >= rowsArray.length) {
+                                results.push({ sheetName, headers: [], data: [] }); return;
+                            }
+                            const headers = rowsArray[headerRowIndex].map(h => String(h || "").trim());
+                            const data = rowsArray.slice(headerRowIndex + 1).map(rowArr => {
+                                let rowData = {};
+                                headers.forEach((header, index) => {
+                                    const rawValue = rowArr[index];
+                                    if (rawValue instanceof Date && !isNaN(rawValue)) {
+                                        rowData[header] = rawValue.toLocaleString(); // Or .toLocaleDateString(), .toISOString()
+                                    } else if (rawValue !== null && rawValue !== undefined) {
+                                        rowData[header] = String(rawValue);
+                                    } else {
+                                        rowData[header] = "";
+                                    }
+                                });
+                                return rowData;
+                            });
+                            results.push({ sheetName, headers, data });
+                        } else {
+                            results.push({ sheetName, headers: [], data: [] });
+                        }
+                    });
+                    resolve(results);
+                } catch (error) {
+                    reject(new Error(`Failed to parse Excel: ${error.message}`));
+                }
+            });
+        }
+
+        // --- Data Storage (DexieJS) ---
+        async function storeData(fileIdentifier, originalFileName, sheetName, headers, data) {
+            console.log(`Storing data for ${fileIdentifier}. Rows: ${data.length}`);
+            try {
+                const dataToStore = data.map(row => {
+                    const searchableTokens = Object.values(row)
+                        .flatMap(val => String(val || "").toLowerCase().split(/\s+/))
+                        .filter(token => token.length > 0);
+                    return { ...row, fileName: fileIdentifier, _searchableTokens: searchableTokens };
+                });
+
+                await db[METADATA_STORE_NAME].put({ fileName: fileIdentifier, originalFileName, sheetName, headers });
+                await db.transaction('rw', db[STORE_NAME], () => db[STORE_NAME].bulkPut(dataToStore));
+                console.log(`Data from ${fileIdentifier} stored successfully.`);
+            } catch (error) {
+                console.error("Error storing data:", error);
+                await db[METADATA_STORE_NAME].delete(fileIdentifier).catch(e => console.error("Meta cleanup failed:", e));
+                throw new Error(`Failed to store data: ${error.message}`);
+            }
+        }
+
+        // --- Search Functionality ---
+        async function handleSearch() {
+            const query = searchBox.value.trim().toLowerCase();
+            searchStatus.textContent = 'Searching...';
+            updateFooterStatus('Searching...');
+
+            if (query.length === 0) {
+                updateResultsDisplay([]);
+                searchStatus.textContent = '';
+                updateFooterStatus('Ready');
+                return;
+            }
+
+            const startTime = performance.now();
+            try {
+                const keywords = query.split(/\s+/).filter(k => k.length > 0);
+                 if (keywords.length === 0) {
+                     updateResultsDisplay([]); searchStatus.textContent = ''; updateFooterStatus('Ready'); return;
+                 }
+
+                let collection = db[STORE_NAME];
+                // More robust multi-keyword search: Find rows that contain ALL keywords in their tokens.
+                // This requires a more complex query or filtering after an initial broader fetch.
+                // For simplicity with Dexie's basic `equals` on multiEntry array, we'll filter post-fetch for "AND" logic.
+                // A more optimized approach might involve `startsWithAnyOf` or custom indexing if performance is critical for huge datasets.
+
+                // Initial fetch for the first keyword to narrow down results
+                let results = await db[STORE_NAME].where('_searchableTokens').equals(keywords[0]).limit(MAX_SEARCH_RESULTS * 5).toArray(); // Fetch more initially for filtering
+
+                // Filter for subsequent keywords
+                if (keywords.length > 1) {
+                    results = results.filter(row => {
+                        return keywords.slice(1).every(kw => row._searchableTokens.includes(kw));
+                    });
+                }
+                results = results.slice(0, MAX_SEARCH_RESULTS); // Apply final limit
+
+                const duration = (performance.now() - startTime).toFixed(1);
+                searchStatus.textContent = `Found ${results.length} results in ${duration} ms. ${results.length >= MAX_SEARCH_RESULTS ? '(Max results shown)' : ''}`;
+                updateResultsDisplay(results);
+            } catch (error) {
+                console.error("Search error:", error);
+                showToast("Error performing search.", 'error');
+                updateResultsDisplay([]);
+                searchStatus.textContent = 'Search error.';
+            } finally {
+                updateFooterStatus('Ready');
+            }
+        }
+
+
+        // --- UI Update Functions ---
+        async function updateResultsDisplay(results) {
+            resultsArea.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+            const isDarkMode = document.documentElement.classList.contains('dark');
+
+            if (results.length === 0) {
+                const msgEl = defaultResultsMessageElement.cloneNode(true);
+                msgEl.style.display = 'block';
+                let msgText = '';
+                let msgIcon = 'fas fa-info-circle';
+
+                if (searchBox.value.trim().length > 0) {
+                    msgText = 'No results found matching your search criteria.';
+                    msgIcon = 'fas fa-search-minus';
+                } else {
+                    const fileCount = await db[METADATA_STORE_NAME].count();
+                    if (fileCount > 0) {
+                        msgText = 'Type in the search box to find data within your stored files.';
+                        msgIcon = 'fas fa-keyboard';
+                    } else {
+                        msgText = 'Upload an Excel file to begin searching.';
+                        msgIcon = 'fas fa-file-upload';
+                    }
+                }
+                msgEl.innerHTML = `<i class="${msgIcon} mr-2 text-3xl block mb-3" style="color: ${isDarkMode ? 'var(--input-placeholder-dark)' : 'var(--input-placeholder-light)'};"></i>${escapeHTML(msgText)}`;
+                msgEl.style.backgroundColor = isDarkMode ? 'var(--bg-secondary-dark)' : 'var(--bg-secondary-light)';
+                msgEl.style.color = isDarkMode ? 'var(--text-secondary-dark)' : 'var(--text-secondary-light)';
+                fragment.appendChild(msgEl);
+                resultsArea.appendChild(fragment);
+                return;
+            }
+            
+            const allMetadataArray = await db[METADATA_STORE_NAME].toArray();
+            const metadataMap = new Map(allMetadataArray.map(m => [m.fileName, m]));
+
+            results.forEach(row => {
+                const rowEl = document.createElement('div');
+                // Added result-card-bg for easier targeting in theme apply function
+                rowEl.className = `result-card-bg rounded-xl shadow-lg p-4 sm:p-5 mb-4 transition-all duration-300 ease-in-out hover:shadow-2xl transform hover:-translate-y-1`;
+                rowEl.style.backgroundColor = isDarkMode ? 'var(--bg-secondary-dark)' : 'var(--bg-secondary-light)';
+
+
+                const meta = metadataMap.get(row.fileName);
+                const headers = meta ? meta.headers : Object.keys(row).filter(k => !k.startsWith('_') && k !== 'id' && k !== 'fileName');
+                
+                let mainTitle = 'N/A';
+                let subTitle = '';
+
+                if (headers.length > 0) {
+                    const potentialTitleHeaders = ['name', 'item name', 'product', 'description', 'title'];
+                    let titleHeader = headers.find(h => potentialTitleHeaders.includes(h.toLowerCase())) || headers[0];
+                    mainTitle = row[titleHeader] || 'Unnamed Item';
+
+                    const potentialSubTitleHeaders = ['id', 'code', 'sku', 'item code', 'product id'];
+                    let subTitleHeader = headers.find(h => potentialSubTitleHeaders.includes(h.toLowerCase()) && h !== titleHeader);
+                    if (subTitleHeader) {
+                         subTitle = row[subTitleHeader] ? `${subTitleHeader}: ${row[subTitleHeader]}` : '';
+                    } else if (headers.length > 1 && headers.find(h => h !== titleHeader)) {
+                        const nextHeader = headers.find(h => h !== titleHeader);
+                        if(nextHeader) subTitle = row[nextHeader] ? `${nextHeader}: ${row[nextHeader]}` : '';
+                    }
+                }
+                
+                const avatarBgColor = isDarkMode ? 'var(--icon-dark)' : 'var(--icon-light)';
+                const avatarTextColor = isDarkMode ? 'var(--button-primary-text-dark)' : 'var(--button-primary-text-light)';
+                const titleColor = isDarkMode ? 'var(--icon-dark)' : 'var(--icon-light)'; // Emerald-like color for title
+                const textColorPrimary = isDarkMode ? 'var(--text-primary-dark)' : 'var(--text-primary-light)';
+                const textColorSecondary = isDarkMode ? 'var(--text-secondary-dark)' : 'var(--text-secondary-light)';
+                const borderColor = isDarkMode ? 'var(--border-dark)' : 'var(--border-light)';
+
+
+                let cardHTML = `
+                    <div class="flex items-start space-x-3 sm:space-x-4">
+                        <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 text-xl sm:text-2xl font-semibold rounded-full flex items-center justify-center uppercase"
+                             style="background-color: ${avatarBgColor}; color: ${avatarTextColor};">
+                            ${escapeHTML(mainTitle.charAt(0))}
+                        </div>
+                        <div class="flex-grow min-w-0">
+                            <h3 class="text-md sm:text-lg font-semibold truncate" title="${escapeHTML(mainTitle)}" style="color: ${titleColor};">${escapeHTML(mainTitle)}</h3>`;
+                if (subTitle) {
+                    cardHTML += `<p class="text-xs sm:text-sm truncate" title="${escapeHTML(subTitle)}" style="color: ${textColorSecondary};">${escapeHTML(subTitle)}</p>`;
+                }
+                cardHTML += `<p class="text-xs mt-0.5" style="color: ${isDarkMode ? '#9ca3af' : '#a1a1aa'};">Source: ${escapeHTML(meta ? `${meta.originalFileName} (${meta.sheetName})` : row.fileName)}</p>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-xs sm:text-sm" style="border-top: 1px solid ${borderColor};">`;
+
+                headers.forEach(header => {
+                    const cellValue = row[header] !== undefined && row[header] !== null ? String(row[header]) : '';
+                    let valueClass = ""; // Will be set by style attribute
+                    let displayValue = escapeHTML(cellValue);
+                    const lowerHeader = header.toLowerCase();
+                    let valueStyle = `color: ${textColorPrimary};`;
+
+
+                    if (lowerHeader === 'mrp' || lowerHeader.includes('price') || lowerHeader.includes('rate')) {
+                        valueStyle = `color: ${isDarkMode ? '#60a5fa' : '#2563eb'}; font-weight: 600;`; // blue
+                        if(!isNaN(parseFloat(cellValue))) displayValue = `₹${parseFloat(cellValue).toFixed(2)}`;
+                    } else if (lowerHeader === 'stock' || lowerHeader.includes('qty') || lowerHeader.includes('quantity') || lowerHeader.includes('bal')) {
+                        const stockVal = parseInt(cellValue);
+                        if (!isNaN(stockVal)) {
+                            if (stockVal > 20) valueStyle = `color: ${isDarkMode ? '#34d399' : '#059669'}; font-weight: 600;`; // green
+                            else if (stockVal > 0) valueStyle = `color: ${isDarkMode ? '#facc15' : '#f59e0b'}; font-weight: 600;`; // orange/yellow
+                            else valueStyle = `color: ${isDarkMode ? '#f87171' : '#ef4444'}; font-weight: 600;`; // red
+                        }
+                    }
+
+                    cardHTML += `
+                        <div class="flex justify-between items-center py-0.5">
+                            <span class="font-medium capitalize" style="color: ${textColorSecondary};">${escapeHTML(String(header))}:</span>
+                            <span class="text-right truncate ml-2" title="${escapeHTML(cellValue)}" style="${valueStyle}">${displayValue}</span>
+                        </div>`;
+                });
+                cardHTML += `</div>`;
+                rowEl.innerHTML = cardHTML;
+                fragment.appendChild(rowEl);
+            });
+            resultsArea.appendChild(fragment);
+        }
+
+        async function loadStoredFilesList() {
+            console.log("Loading stored files list...");
+            updateFooterStatus('Loading stored files...');
+            const isDarkMode = document.documentElement.classList.contains('dark');
+            try {
+                const metadata = await db[METADATA_STORE_NAME].orderBy('originalFileName').toArray();
+                storedFilesList.innerHTML = '';
+
+                if (metadata.length === 0) {
+                    const noFilesEl = noFilesMessageElement.cloneNode(true);
+                    noFilesEl.style.display = 'flex';
+                    noFilesEl.style.color = isDarkMode ? 'var(--text-secondary-dark)' : 'var(--text-secondary-light)';
+                    storedFilesList.appendChild(noFilesEl);
+                } else {
+                    metadata.forEach(meta => {
+                        const itemEl = document.createElement('div');
+                        itemEl.className = 'file-item';
+                        // Styles applied via CSS vars and .dark class
+
+                        const fileNameText = document.createElement('span');
+                        fileNameText.className = 'file-name-text flex-grow';
+                        fileNameText.textContent = `${meta.originalFileName} (${meta.sheetName})`;
+                        // Style applied via CSS vars
+
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'delete-button';
+                        deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                        // Style applied via CSS vars
+                        deleteBtn.onclick = () => deleteFileData(meta.fileName);
+
+                        itemEl.appendChild(fileNameText);
+                        itemEl.appendChild(deleteBtn);
+                        storedFilesList.appendChild(itemEl);
+                    });
+                }
+            } catch (error) {
+                console.error("Error loading stored files:", error);
+                showToast("Could not load stored files.", 'error');
+                storedFilesList.innerHTML = `<div class="file-item italic p-4" style="color: ${isDarkMode ? 'var(--text-secondary-dark)' : 'var(--text-secondary-light)'};"><i class="fas fa-exclamation-triangle mr-2"></i>Error loading files.</div>`;
+            } finally {
+                updateFooterStatus('Ready');
+            }
+        }
+
+        async function deleteFileData(fileIdentifier) {
+            if (confirm(`Are you sure you want to delete all data from "${fileIdentifier.split("::")[0]}" (Sheet: "${fileIdentifier.split("::")[1]}")? This cannot be undone.`)) {
+                await deleteFileDataInternal(fileIdentifier, true);
+            }
+        }
+
+        async function deleteFileDataInternal(fileIdentifier, showUserFeedback = true) {
+            console.log(`Deleting data for ${fileIdentifier}`);
+            updateFooterStatus(`Deleting ${fileIdentifier}...`);
+            try {
+                await db.transaction('rw', db[STORE_NAME], db[METADATA_STORE_NAME], async () => {
+                    await db[STORE_NAME].where('fileName').equals(fileIdentifier).delete();
+                    await db[METADATA_STORE_NAME].delete(fileIdentifier);
+                });
+                if (showUserFeedback) {
+                    showToast(`"${fileIdentifier.split("::")[0]}" (Sheet: "${fileIdentifier.split("::")[1]}") deleted successfully.`, 'success');
+                }
+                await loadStoredFilesList(); // Refresh list
+                if (searchBox.value.trim().length > 0) { // Re-run search if query exists
+                    handleSearch();
+                } else {
+                    updateResultsDisplay([]); // Clear results if no search query
+                }
+            } catch (error) {
+                console.error("Error deleting file data:", error);
+                if (showUserFeedback) {
+                    showToast(`Error deleting file: ${error.message}`, 'error');
+                }
+            } finally {
+                updateFooterStatus('Ready');
+            }
+        }
+
+        function updateFooterStatus(message) {
+            footerStatus.textContent = message;
+        }
+
+    </script>
+</body>
+</html>
